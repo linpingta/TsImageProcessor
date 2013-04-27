@@ -2,6 +2,9 @@
 #define _H_TSRECT_INCLUDED_
 
 #include "TsPoint.h"
+//#include "TsCenterRect.h"
+
+//class TsCenterRect;
 
 template<class T>
 class TsRect
@@ -14,6 +17,7 @@ public:
 	TsPoint<T> GetLeftUpCorner();
 	T GetLength();
 	T GetHeight();
+	//TsCenterRect<T> TransferToCenterRect();
 private:
 	TsPoint<T> leftUpCorner;
 	T length;
@@ -63,5 +67,15 @@ void TsRect<T>::SetLeftUpCorner( TsPoint<T> leftUpCorner )
 {
 	this->leftUpCorner = leftUpCorner;
 }
+
+//template<class T>
+//TsCenterRect<T> TsRect<T>::TransferToCenterRect()
+//{
+//	TsCenterRect<T> returnValue;
+//	returnValue.SetCenter(leftUpCorner.x + length / 2,leftUpCorner.y + height / 2);
+//	returnValue.SetLength(length);
+//	returnValue.SetHeight(height);
+//	return returnValue;
+//}
 
 #endif

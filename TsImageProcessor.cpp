@@ -1,4 +1,17 @@
 #include "TsImageProcessor.h"
+#include "TsConstantVariable.h"
+#include "TsObjectProbabilityInfo.h"
+
+#include <fstream>
+#include <list>
+using namespace std;
+
+#define MFC_SAVE_BMP
+#ifdef MFC_SAVE_BMP
+#include <afx.h>
+#include <shlwapi.h>
+#pragma comment(lib,"Shlwapi.lib") 
+#endif
 
 TsImageProcess::TsImageProcess():l(0),h(0)
 {
@@ -33,17 +46,21 @@ TsImageProcess::TsImageProcess( unsigned int _w,unsigned int _h):l(_w),h(_h)
 
 TsImageProcess::TsImageProcess( string filename )
 {
-	// TODO
+	LoadBmp(filename);
 }
 
 TsImageProcess::~TsImageProcess()
 {
-	for (int i = 0;i < l;++i)
+	if (image)
 	{
-		delete[] image[i];
+		for (int i = 0;i < l;++i)
+		{
+			delete[] image[i];
+		}
+		delete[] image;
+		image = NULL;
 	}
-	delete[] image;
-	image = NULL;
+
 	l = 0;
 	h = 0;
 }
@@ -60,21 +77,11 @@ TsImageProcess::~TsImageProcess()
 // Parameter: unsigned int _w
 // Parameter: unsigned int _h
 //************************************
-bool TsImageProcess::SetImage( unsigned int** inputImage,unsigned int _w,unsigned int _h)
+void TsImageProcess::SetImage( unsigned int** inputImage,unsigned int _l,unsigned int _h)
 {
-	if (l != _w || h != _h)
-	{
-		return false;
-	}
-
-	for (int i = 0;i < l;++i)
-	{
-		for (int j = 0;j < h;++j)
-		{
-			image[i][j] = inputImage[i][j];
-		}
-	}
-	return true;
+	image = inputImage;
+	l = _l;
+	h = _h;
 }
 
 
@@ -118,4 +125,271 @@ unsigned int** TsImageProcess::GetRectImage(TsRect<int> rectRegion)
 	}
 
 	return partImage;
+}
+
+unsigned int TsImageProcess::GetLength()
+{
+	return l;
+}
+
+unsigned int TsImageProcess::GetHeight()
+{
+	return h;
+}
+
+unsigned int** TsImageProcess::GetImage()
+{
+	return image;
+}
+
+//************************************
+// Method:    LoadBmp
+// FullName:  TsImageProcess::LoadBmp
+// Access:    public 
+// Returns:   void
+// Qualifier: Load bmp file with filename
+// Parameter: string filename
+//************************************
+void TsImageProcess::LoadBmp(string filename)
+{
+	// TODO
+}
+
+//************************************
+// Method:    LoadMatrix
+// FullName:  TsImageProcess::LoadMatrix
+// Access:    public 
+// Returns:   void
+// Qualifier: Load bmp file matrix from txt.
+// Parameter: string filename
+// Parameter: unsigned int l
+// Parameter: unsigned int h
+//************************************
+void TsImageProcess::LoadMatrix(string filename)
+{
+	if (l == 0 || h == 0)
+	{
+		return;
+	}
+
+	ifstream fin;
+	fin.open(filename.c_str());
+
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			fin >> image[i][j];
+		}
+	}
+	fin.close();
+}
+
+//************************************
+// Method:    SaveBmp
+// FullName:  TsImageProcess::SaveBmp
+// Access:    public 
+// Returns:   void
+// Qualifier: Save image to bmpFilename and label it with countNum
+// Parameter: string bmpFilename
+// Parameter: int countNum
+//************************************
+void TsImageProcess::SaveBmp(string bmpFilename,int countNum)
+{
+#ifdef MFC_SAVE_BMP
+	l = l/4;
+	l = l*4;
+
+	BYTE *pBits = new BYTE[l * h];
+
+	char aCurrentDirectory[200];
+	GetCurrentDirectory(200,aCurrentDirectory);
+	string strCurrentDirectory = aCurrentDirectory;
+	strCurrentDirectory.append("/");
+	strCurrentDirectory.append(bmpFilename);
+
+	CString str1;
+	str1.Format(_T("%d.bmp"),countNum);   
+	CString str = strCurrentDirectory.c_str();
+	str += str1;
+
+	CString strTest1;
+	strTest1.Format(_T("%d.txt"),countNum);
+	CString strTest = strCurrentDirectory.c_str();
+	strTest += strTest1;
+
+	for (int i = 0; i < l; ++i)
+	{
+		for (int j = 0; j < h; j++)
+		{
+			pBits[j * l + i] = image[l - i - 1][h - j - 1];
+		}
+	}
+
+	BITMAPFILEHEADER hdr;   
+	BITMAPINFOHEADER bih;   
+	RGBQUAD   rgbQuad[256];         
+
+	bih.biBitCount=8;   
+	bih.biClrImportant=0;   
+	bih.biClrUsed=0;   
+	bih.biCompression=BI_RGB;   
+	bih.biHeight=h;   
+	bih.biPlanes=1;   
+	bih.biSize=sizeof(BITMAPINFOHEADER);   
+	bih.biSizeImage=0;   
+	bih.biWidth=l;   
+	bih.biXPelsPerMeter=0;   
+	bih.biYPelsPerMeter=0;   
+
+	for(int i=0;   i<256;   i++)   
+	{   
+		rgbQuad[i].rgbBlue  =   (BYTE)i;   
+		rgbQuad[i].rgbGreen =   (BYTE)i;   
+		rgbQuad[i].rgbRed   =   (BYTE)i;   
+		rgbQuad[i].rgbReserved   =   0;   
+	}   
+
+	//Fill   in   the   fields   of   the   file   header     
+	hdr.bfType=   (WORD)0x4D42; //   is   always   "BM"   
+	hdr.bfSize=   (DWORD)(sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)        
+		+ sizeof(RGBQUAD)*256 + h*l);   
+	hdr.bfReserved1   =   0;   
+	hdr.bfReserved2   =   0;   
+	hdr.bfOffBits=   (DWORD)(sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)   
+		+sizeof(RGBQUAD)*256);   
+
+	CFile   mfile;   
+	if (mfile.Open( str,   CFile::modeWrite|CFile::modeCreate) == FALSE)
+	{
+		delete []pBits;
+		pBits = NULL;
+		return;
+	}
+
+	//   Write   the   file   header     
+	mfile.Write(   &hdr,   sizeof(hdr)   );			   //写文件头   
+	mfile.Write(   &bih,   sizeof(bih)   );			   //写信息头   
+	mfile.Write((LPSTR)rgbQuad,sizeof(RGBQUAD)*256);   //写调色板   
+	mfile.Write(pBits,h * l);                          //写数据   
+	mfile.Close();   
+
+	delete []pBits;
+	pBits = NULL;
+#endif
+}
+
+void TsImageProcess::MedianFilter()
+{
+	int i,j,k,r,q,p;
+	int s[9],temp;
+	for(i = 0;i < l;i++)
+		for(j = 0;j < h;j++)
+			if ((i == 0)||(j == 0)||(i == l-1)||(j == h-1))		 //图像边缘处理
+				image[i][j] = 0;
+			else
+			{ 
+				for(k = -1;k <= 1;k++)                        //在3*3模版内作中值滤波
+					for(r = -1;r <= 1;r++)
+						s[(k + 1) * 3 + r + 1]=image[i + k][j + r];
+				for(q = 0;q < 9;q++)
+					for(p = 0;p < q;p++)
+						if(s[q] <= s[p]) 
+						{
+							temp = s[q];
+							s[q] = s[p];
+							s[p] = temp;
+						}
+						image[i][j] = s[4];              //取中间值
+			}
+}
+
+TsImageProcess& TsImageProcess::GetRectImageProcessor( TsRect<int> inputRect )
+{
+	unsigned int** tmpImage = GetRectImage(inputRect);
+	unsigned int length = inputRect.GetLength();
+	unsigned int height = inputRect.GetHeight();
+	TsImageProcess returnValue;
+	returnValue.SetImage(tmpImage,length,height);
+	return returnValue; 
+}
+
+void TsImageProcess::BinaryImage( int threshold )
+{
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			image[i][j] = (image[i][j] > threshold) ? TsConstantVariable::kMaxGrayValue : TsConstantVariable::kMinGrayValue;
+		}
+	}
+}
+
+//************************************
+// Method:    GetThresholdWithOtsu
+// FullName:  TsImageProcess::GetThresholdWithOtsu
+// Access:    public 
+// Returns:   int
+// Qualifier: Get threshold of current image
+//************************************
+int TsImageProcess::GetThresholdWithOtsu()
+{
+	float Weight_All=0,Mean_All = 0;	// 图像总重量
+	float Weight_b=0,Weight_f;			// Otsu的背景和前景比重
+	float Mean_b=0,Mean_f=0;			// Otsu的前景和背景的均值
+	float tempS,maxS=0;					// 当前类间方差，最大类间方差
+	int maxThreshold = 0;					// 取得最大类间方差时候的阈值
+	int *temphisto;						// 直方图
+	temphisto = new int[256];
+	/************************************************************************/
+	/* 直方图统计		                                                    */
+	/************************************************************************/
+	for(int i = 0;i<256;i++)
+	{
+		temphisto[i] = 0;
+	}	// 直方图清零
+
+	for (int i =0;i<l;i++)
+	{
+		for (int j = 0;j<h;j++)
+		{
+			if (image[i][j] > 255 || image[i][j] < 0)
+			{
+				continue;
+			}
+			temphisto[image[i][j]]++;	// 直方图对应位置+1
+		}
+	}
+	for (int i = 0;i<256;i++)		// 统计直方图总重量
+	{
+		Weight_All+=temphisto[i];
+		Mean_All+=i*temphisto[i];
+	}
+	/************************************************************************/
+	/* Otsu方法：最大类间方差法计算                                         */
+	/************************************************************************/
+	for(int i =0 ;i < TsConstantVariable::kMaxGrayValue;i++)			// 注意，阈值实际上是i+1
+	{
+		// 计算当前阈值下的最大类间方差
+		Weight_b += temphisto[i];		// 每次只增加一个当前的值，就可以获得背景重量(不知比重)
+		Weight_f = Weight_All-Weight_b;
+
+		Mean_b += i*temphisto[i];
+		Mean_f = Mean_All-Mean_b;
+
+		tempS = (Weight_b/Weight_All)*(Weight_f/Weight_All)*(Mean_b/Weight_b-Mean_f/Weight_f)*(Mean_b/Weight_b-Mean_f/Weight_f);
+		if (tempS>maxS)
+		{
+			maxThreshold = i+1;
+			maxS = tempS;
+		}
+	}
+	delete []temphisto;
+	return maxThreshold;
+}
+
+list<TsObjectProbabilityInfo> TsImageProcess::GetLinkObjectsFromImage( int garyThreshold,int blockSizeThreshold)
+{
+	list<TsObjectProbabilityInfo> returnValue;
+	return returnValue;
 }

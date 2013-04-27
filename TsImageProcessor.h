@@ -2,11 +2,14 @@
 #define _H_TSIMAGEPROCESSOR_INCLUDED_
 
 #include <string>
+#include <list>
 using namespace std;
 
 #include "TsFunction.h"
 #include "TsPoint.h"
 #include "TsRect.h"
+#include "TsCenterRect.h"
+#include "TsObjectProbabilityInfo.h"
 
 /************************************************************************/
 /* TsImageProcess                                                                     
@@ -22,7 +25,7 @@ class TsImageProcess
 {
 private:
 	unsigned int** image;		 // image source
-	unsigned int l;              // image width
+	unsigned int l;              // image length
 	unsigned int h;				 // image height
 public:
 	TsImageProcess();
@@ -31,8 +34,19 @@ public:
 	TsImageProcess(string filename);
 	~TsImageProcess();
 public:
-	bool SetImage(unsigned int**,unsigned int,unsigned int); // set image value with image has already allocated
+	void SetImage(unsigned int**,unsigned int,unsigned int); // set image value with image has already allocated
 	unsigned int** GetRectImage(TsRect<int>);
+	TsImageProcess& GetRectImageProcessor(TsRect<int>);
+	unsigned int** GetImage();
+	unsigned int GetLength();
+	unsigned int GetHeight();
+	void LoadBmp(string);
+	void LoadMatrix(string);
+	void SaveBmp(string,int);
+	void MedianFilter();
+	void BinaryImage(int);
+	int GetThresholdWithOtsu();
+	list<TsObjectProbabilityInfo> GetLinkObjectsFromImage(int,int);
 };
 
 class A{};

@@ -6,6 +6,16 @@ struct TsPoint
 {
 	T x;
 	T y;
+
+	TsPoint()
+	{
+		;
+	}
+	TsPoint(T _x,T _y)
+	{
+		x = _x;
+		y = _y;
+	}
 };
 
 #endif
