@@ -10,6 +10,8 @@ template<class T>
 class TsRect
 {
 public:
+	TsRect();
+	TsRect(TsPoint<T>,T,T);
 	void SetRect(TsPoint<T>,T,T);
 	void SetLeftUpCorner(TsPoint<T>);
 	void SetLength(T);
@@ -23,6 +25,20 @@ private:
 	T length;
 	T height;
 };
+
+template<class T>
+TsRect<T>::TsRect()
+{
+	;
+}
+
+template<class T>
+TsRect<T>::TsRect(TsPoint<T> _leftUpCorner,T _l,T _h)
+{
+	leftUpCorner = _leftUpCorner;
+	length = _l;
+	height = _h;
+}
 
 template<class T>
 void TsRect<T>::SetRect( TsPoint<T> leftUpCorner,T length,T height)

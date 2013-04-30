@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <list>
+#include <queue>
 using namespace std;
 
 #define MFC_SAVE_BMP
@@ -13,12 +14,12 @@ using namespace std;
 #pragma comment(lib,"Shlwapi.lib") 
 #endif
 
-TsImageProcess::TsImageProcess():l(0),h(0)
+TsImageProcess::TsImageProcess():l(0),h(0),allocateL(l),allocateH(h)
 {
 	image = NULL;
 }
 
-TsImageProcess::TsImageProcess( unsigned int** _image,unsigned int _w,unsigned int _h):l(_w),h(_h)
+TsImageProcess::TsImageProcess( unsigned int** _image,unsigned int _w,unsigned int _h):l(_w),h(_h),allocateL(l),allocateH(h)
 {
 	image = new unsigned int*[l]();
 	for (int i = 0;i < l;++i)
@@ -35,7 +36,7 @@ TsImageProcess::TsImageProcess( unsigned int** _image,unsigned int _w,unsigned i
 	}
 }
 
-TsImageProcess::TsImageProcess( unsigned int _w,unsigned int _h):l(_w),h(_h)
+TsImageProcess::TsImageProcess( unsigned int _w,unsigned int _h):l(_w),h(_h),allocateL(l),allocateH(h)
 {
 	image = new unsigned int*[l]();
 	for (int i = 0;i < l;++i)
@@ -53,7 +54,7 @@ TsImageProcess::~TsImageProcess()
 {
 	if (image)
 	{
-		for (int i = 0;i < l;++i)
+		for (int i = 0;i < allocateL;++i)
 		{
 			delete[] image[i];
 		}
@@ -63,6 +64,8 @@ TsImageProcess::~TsImageProcess()
 
 	l = 0;
 	h = 0;
+	allocateL = l;
+	allocateH = h;
 }
 
 
@@ -79,9 +82,16 @@ TsImageProcess::~TsImageProcess()
 //************************************
 void TsImageProcess::SetImage( unsigned int** inputImage,unsigned int _l,unsigned int _h)
 {
-	image = inputImage;
+	//image = inputImage;
 	l = _l;
 	h = _h;
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			image[i][j] = inputImage[i][j];
+		}
+	}
 }
 
 
@@ -127,12 +137,12 @@ unsigned int** TsImageProcess::GetRectImage(TsRect<int> rectRegion)
 	return partImage;
 }
 
-unsigned int TsImageProcess::GetLength()
+unsigned int TsImageProcess::GetLength() const
 {
 	return l;
 }
 
-unsigned int TsImageProcess::GetHeight()
+unsigned int TsImageProcess::GetHeight() const
 {
 	return h;
 }
@@ -388,8 +398,170 @@ int TsImageProcess::GetThresholdWithOtsu()
 	return maxThreshold;
 }
 
-list<TsObjectProbabilityInfo> TsImageProcess::GetLinkObjectsFromImage( int garyThreshold,int blockSizeThreshold)
+void TsImageProcess::SetImageLabel(int m,int n,queue<TsPoint<int>>& position,int label,int& count,float& seaDistanceForAll,float& grayForAll )
 {
-	list<TsObjectProbabilityInfo> returnValue;
-	return returnValue;
+		seaDistanceForAll = 0;
+		grayForAll = 0.0;
+		count = 0;
+
+		while (!position.empty())
+		{
+			position.pop();
+		}
+
+		image[m][n] = label;
+		position.push(TsPoint<int>(m,n));
+
+		TsPoint<int> tmpPosition;
+
+		while (!position.empty())
+		{
+			tmpPosition = position.front();
+			position.pop();
+			++count;
+
+			// 考虑当前元素的上下左右
+			if (tmpPosition.x > 0 && image[tmpPosition.x - 1][tmpPosition.y] == TsConstantVariable::kMaxGrayValue)
+			{
+				position.push(TsPoint<int>(tmpPosition.x - 1,tmpPosition.y));
+				image[tmpPosition.x - 1][tmpPosition.y] = label;
+			}
+			if (tmpPosition.x < l - 1 && image[tmpPosition.x + 1][tmpPosition.y] == TsConstantVariable::kMaxGrayValue)
+			{
+				position.push(TsPoint<int>(tmpPosition.x + 1,tmpPosition.y));
+				image[tmpPosition.x + 1][tmpPosition.y] = label;
+			}
+			if (tmpPosition.y > 0 && image[tmpPosition.x][tmpPosition.y - 1] == TsConstantVariable::kMaxGrayValue)
+			{
+				position.push(TsPoint<int>(tmpPosition.x,tmpPosition.y - 1));
+				image[tmpPosition.x][tmpPosition.y - 1] = label;
+			}
+			if (tmpPosition.y < h - 1 && image[tmpPosition.x][tmpPosition.y + 1] == TsConstantVariable::kMaxGrayValue)
+			{
+				position.push(TsPoint<int>(tmpPosition.x,tmpPosition.y + 1));
+				image[tmpPosition.x][tmpPosition.y + 1] = label;
+			}
+
+			seaDistanceForAll += abs(tmpPosition.y);
+			grayForAll += image[tmpPosition.x][tmpPosition.y];
+		}
 }
+
+TsSquareRect<int> TsImageProcess::GetBoundaryFromBinaryImage(int label)
+{
+	TsSquareRect<int> boundary;
+
+	int minX = l - 1,maxX = 0,minY = h - 1, maxY = 0;
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			if (image[i][j] == label && i < minX) 
+			{
+				minX = i;
+			}
+
+			if (image[i][j] == label && i > maxX)
+			{
+				maxX = i;
+			}
+		}
+	}
+
+	for (int j = 0;j < h;++j)
+	{
+		for (int i = 0;i < l;++i)
+		{
+			if (image[i][j] == label && j < minY) 
+			{
+				minY = j;
+			}
+
+			if (image[i][j] == label && j > maxY)
+			{
+				maxY = j;
+			}
+		}
+	}
+
+	boundary.SetRect(minX,maxX,minY,maxY);
+	return boundary;
+}
+
+//************************************
+// Method:    SetImageWithRect
+// FullName:  TsImageProcess::SetImageWithRect
+// Access:    public 
+// Returns:   void
+// Qualifier: Get rectRegion from originalImage
+// Parameter: TsImageProcess originalImage
+// Parameter: TsRect<int> rectRegion
+//************************************
+void TsImageProcess::SetImageWithRect( TsImageProcess originalImageProcessor,TsRect<int> rectRegion)
+{
+	l = rectRegion.GetLength();
+	h = rectRegion.GetHeight();
+	TsPoint<int> leftUpCorner = rectRegion.GetLeftUpCorner();
+	unsigned int** originalImage = originalImageProcessor.GetImage();
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			image[i][j] = originalImage[i + leftUpCorner.x][j + leftUpCorner.y];
+		}
+	}
+}
+
+void TsImageProcess::SetBlockImageWithSingleValue( unsigned int value,unsigned int partLength,unsigned int partHeight )
+{
+	l = partLength;
+	h = partHeight;
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			image[i][j] = value;
+		}
+	}
+}
+
+TsPoint<int> TsImageProcess::GetImageGrayBoundary()
+{
+	int minGrayValue = TsConstantVariable::kMaxGrayValue;
+	int maxGrayValue = 0;
+
+	for (int i = 0;i < l;++i)
+	{
+		for (int j = 0;j < h;++j)
+		{
+			if (image[i][j] < 0 || image[i][j] > TsConstantVariable::kMaxGrayValue)
+			{
+				continue;
+			}
+
+			if (minGrayValue > image[i][j])
+			{
+				minGrayValue = image[i][j];
+			}
+			if (maxGrayValue < image[i][j])
+			{
+				maxGrayValue = image[i][j];
+			}
+		}
+	}
+
+	return TsPoint<int>(minGrayValue,maxGrayValue);
+}
+
+void TsImageProcess::SetPointValueInImage( unsigned int value,unsigned int m,unsigned int n)
+{
+	if (!TsFunction::BeInLimitaion<int>(m,0,l - 1) ||
+		!TsFunction::BeInLimitaion<int>(n,0,h - 1))
+	{
+		return;
+	}
+
+	image[m][n] = value;
+}
+
+

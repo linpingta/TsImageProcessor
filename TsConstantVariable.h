@@ -10,6 +10,14 @@ public:
 	static const int kMaxGrayValue;
 	static const int kMinGrayValue;
 	static const int kMinBlockSize;
+	static const int kMinBlockSizeForSearch;
+	static const float kStandardGrayBoundary;
+	static const double kPI;
+	static const int kTargetGrayBoundaryScale;
+	static const float kRatioForRegionToBeConsidered;
+	static const int kFullScreenScale;
+	static const int kMaxOffsetX;
+	static const int kMaxOffsetY;
 };
 
 #endif

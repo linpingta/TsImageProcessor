@@ -28,7 +28,35 @@ public:
 	static TsSquareRect<T> TransferFromCenterRectToSquareRect(TsCenterRect<T>);
 	template<class T>
 	static T SetValueBoundary(T,T);
+	template<class T>
+	static void ReleaseMemoryOfArray(T*);
+	template<class T,class K>
+	static void ReleaseMemeoryOfMatrix(T**,K);
 };
+
+template<class T>
+static void TsFunction::ReleaseMemoryOfArray(T* val)
+{
+	if (val)
+	{
+		delete[] val;
+		val = NULL;
+	}
+}
+
+template<class T,class K>
+static void TsFunction::ReleaseMemeoryOfMatrix(T** val,K length)
+{
+	if (val)
+	{
+		for (K i = 0;i < length;++i)
+		{
+			delete[] val[i];
+		}
+		delete[] val;
+		val = NULL;
+	}
+}
 
 template<class T>
 static T TsFunction::UpperBoundary(T value,T upBoundary)
@@ -127,7 +155,7 @@ static TsRect<T> TsFunction::TransferFromCenterRectToRect( TsCenterRect<T> input
 	TsPoint<T> center = inputRect.GetCenter();
 	T length = inputRect.GetLength();
 	T height = inputRect.GetLength();
-	returnValue.SetLeftUpCorner(center.x - length / 2,center.y - height / 2);
+	returnValue.SetLeftUpCorner(TsPoint<int>(center.x - length / 2,center.y - height / 2));
 	returnValue.SetLength(length);
 	returnValue.SetHeight(height);
 	return returnValue;

@@ -3,12 +3,14 @@
 
 #include <string>
 #include <list>
+#include <queue>
 using namespace std;
 
 #include "TsFunction.h"
 #include "TsPoint.h"
 #include "TsRect.h"
 #include "TsCenterRect.h"
+#include "TsSquareRect.h"
 #include "TsObjectProbabilityInfo.h"
 
 /************************************************************************/
@@ -19,14 +21,14 @@ using namespace std;
 */
 /************************************************************************/
 
-class A;
-
 class TsImageProcess
 {
 private:
 	unsigned int** image;		 // image source
 	unsigned int l;              // image length
 	unsigned int h;				 // image height
+	unsigned int allocateL;      // store image length for deletion
+	unsigned int allocateH;      // store image height for deletion
 public:
 	TsImageProcess();
 	TsImageProcess(unsigned int**,unsigned int,unsigned int);
@@ -35,22 +37,23 @@ public:
 	~TsImageProcess();
 public:
 	void SetImage(unsigned int**,unsigned int,unsigned int); // set image value with image has already allocated
+	void SetImageWithRect(TsImageProcess,TsRect<int>);
+	void SetBlockImageWithSingleValue(unsigned int,unsigned int,unsigned int);
+	void SetPointValueInImage(unsigned int,unsigned int,unsigned int);
 	unsigned int** GetRectImage(TsRect<int>);
 	TsImageProcess& GetRectImageProcessor(TsRect<int>);
 	unsigned int** GetImage();
-	unsigned int GetLength();
-	unsigned int GetHeight();
+	unsigned int GetLength() const;
+	unsigned int GetHeight() const;
 	void LoadBmp(string);
 	void LoadMatrix(string);
 	void SaveBmp(string,int);
 	void MedianFilter();
 	void BinaryImage(int);
 	int GetThresholdWithOtsu();
-	list<TsObjectProbabilityInfo> GetLinkObjectsFromImage(int,int);
+	void SetImageLabel(int m,int n,queue<TsPoint<int>>& position,int label,int& count,float& seaDistanceForAll,float& grayForAll );
+	TsSquareRect<int> GetBoundaryFromBinaryImage(int);
+	TsPoint<int> GetImageGrayBoundary();
 };
-
-class A{};
-
-
 
 #endif

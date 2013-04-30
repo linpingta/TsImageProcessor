@@ -7,6 +7,9 @@ template<class T>
 class TsSquareRect
 {
 public:
+	TsSquareRect();
+	TsSquareRect(T,T,T,T);
+public:
 	void SetRect(T,T,T,T);
 	TsPoint<T> GetHorizonValue();
 	TsPoint<T> GetVerticalValue();
@@ -18,6 +21,18 @@ private:
 	T minY;
 	T maxY;
 };
+
+template<class T>
+TsSquareRect<T>::TsSquareRect()
+{
+
+}
+
+template<class T>
+TsSquareRect<T>::TsSquareRect(T minX,T maxX,T minY,T maxY)
+{
+	SetRect(minX,maxX,minY,maxY);
+}
 
 template<class T>
 T TsSquareRect<T>::GetHeight()
