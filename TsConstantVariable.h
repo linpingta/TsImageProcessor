@@ -18,6 +18,7 @@ public:
 	static const int kFullScreenScale;
 	static const int kMaxOffsetX;
 	static const int kMaxOffsetY;
+	static const int kMaxImageLine;
 };
 
 #endif

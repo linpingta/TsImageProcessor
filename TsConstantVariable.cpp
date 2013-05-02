@@ -14,3 +14,4 @@ const float TsConstantVariable::kRatioForRegionToBeConsidered = 0.25;
 const int TsConstantVariable::kFullScreenScale = 2;
 const int TsConstantVariable::kMaxOffsetX = 5;
 const int TsConstantVariable::kMaxOffsetY = 2;
+const int TsConstantVariable::kMaxImageLine = 512;

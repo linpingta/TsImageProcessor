@@ -27,7 +27,8 @@ private:
 	unsigned int** image;		 // image source
 	unsigned int l;              // image length
 	unsigned int h;				 // image height
-	unsigned int allocateL;      // store image length for deletion
+	unsigned int allocateL;      // store image length for deletion (because space needs to be 
+								 // given in the first time while I don't know how large it really is)
 	unsigned int allocateH;      // store image height for deletion
 public:
 	TsImageProcess();
@@ -36,6 +37,8 @@ public:
 	TsImageProcess(string filename);
 	~TsImageProcess();
 public:
+	void Init(unsigned int,unsigned int);
+	void Release();
 	void SetImage(unsigned int**,unsigned int,unsigned int); // set image value with image has already allocated
 	void SetImageWithRect(TsImageProcess,TsRect<int>);
 	void SetBlockImageWithSingleValue(unsigned int,unsigned int,unsigned int);
@@ -54,6 +57,7 @@ public:
 	void SetImageLabel(int m,int n,queue<TsPoint<int>>& position,int label,int& count,float& seaDistanceForAll,float& grayForAll );
 	TsSquareRect<int> GetBoundaryFromBinaryImage(int);
 	TsPoint<int> GetImageGrayBoundary();
+
 };
 
 #endif

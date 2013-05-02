@@ -109,8 +109,8 @@ static TsCenterRect<T>
 	TsFunction::TransferFromSquareRectToCenterRect( TsSquareRect<T> inputRect )
 {
 	TsCenterRect<T> returnValue;
-	returnValue.SetCenter((inputRect.GetHorizonValue().x + inputRect.GetHorizonValue().y) / 2,
-		(inputRect.GetVerticalValue().x + inputRect.GetVerticalValue().y) / 2);
+	returnValue.SetCenter(TsPoint<T>((inputRect.GetHorizonValue().x + inputRect.GetHorizonValue().y) / 2,
+		(inputRect.GetVerticalValue().x + inputRect.GetVerticalValue().y) / 2));
 	returnValue.SetLength(inputRect.GetLength());
 	returnValue.SetHeight(inputRect.GetHeight());
 	return returnValue;

@@ -68,6 +68,36 @@ TsImageProcess::~TsImageProcess()
 	allocateH = h;
 }
 
+void TsImageProcess::Init(unsigned int _l,unsigned int _h)
+{
+	l = _l;
+	h = _h;
+	allocateL = l;
+	allocateH = h;
+	image = new unsigned int*[l]();
+	for (int i = 0;i < l;++i)
+	{
+		image[i] = new unsigned int[h]();
+	}
+}
+
+void TsImageProcess::Release()
+{
+	if (image)
+	{
+		for (int i = 0;i < allocateL;++i)
+		{
+			delete[] image[i];
+		}
+		delete[] image;
+		image = NULL;
+	}
+
+	l = 0;
+	h = 0;
+	allocateL = l;
+	allocateH = h;
+}
 
 //************************************
 // Method:    SetImage
